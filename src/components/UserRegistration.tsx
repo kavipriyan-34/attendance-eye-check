@@ -12,7 +12,7 @@ const API_BASE_URL = 'http://localhost:5000';
 export const UserRegistration: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
-    email: ''
+    employee_id: ''
   });
   const [capturedImage, setCapturedImage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,7 +37,7 @@ export const UserRegistration: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.email || !capturedImage) {
+    if (!formData.name || !formData.employee_id || !capturedImage) {
       toast({
         title: "Missing Information",
         description: "Please fill all fields and capture your face image.",
@@ -49,14 +49,14 @@ export const UserRegistration: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/register_user`, {
+      const response = await fetch(`${API_BASE_URL}/api/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           name: formData.name,
-          email: formData.email,
+          employee_id: formData.employee_id,
           image: capturedImage
         }),
       });
@@ -70,7 +70,7 @@ export const UserRegistration: React.FC = () => {
         });
         
         // Reset form
-        setFormData({ name: '', email: '' });
+        setFormData({ name: '', employee_id: '' });
         setCapturedImage('');
       } else {
         throw new Error(data.error || 'Registration failed');
@@ -111,13 +111,13 @@ export const UserRegistration: React.FC = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="employee_id">Employee ID</Label>
                 <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={formData.email}
+                  id="employee_id"
+                  name="employee_id"
+                  type="text"
+                  placeholder="Enter your employee ID"
+                  value={formData.employee_id}
                   onChange={handleInputChange}
                   required
                 />

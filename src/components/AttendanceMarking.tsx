@@ -24,7 +24,7 @@ export const AttendanceMarking: React.FC = () => {
     setLastResult(null);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/mark_attendance`, {
+      const response = await fetch(`${API_BASE_URL}/api/mark-attendance`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

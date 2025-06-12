@@ -9,37 +9,38 @@ import { Users } from 'lucide-react';
 const API_BASE_URL = 'http://localhost:5000';
 
 interface AttendanceRecord {
+  id: number;
+  name: string;
+  employee_id: string;
   timestamp: string;
-  status: string;
+  date: string;
+  time: string;
 }
 
 export const AttendanceHistory: React.FC = () => {
-  const [userId, setUserId] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
   const [history, setHistory] = useState<AttendanceRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const fetchHistory = async () => {
-    if (!userId) {
-      toast({
-        title: "Missing User ID",
-        description: "Please enter a valid user ID.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsLoading(true);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/attendance_history/${userId}`);
+      const params = new URLSearchParams();
+      if (selectedDate) {
+        params.append('date', selectedDate);
+      }
+      
+      const url = `${API_BASE_URL}/api/attendance-history${params.toString() ? '?' + params.toString() : ''}`;
+      const response = await fetch(url);
       
       if (response.ok) {
-        const data: AttendanceRecord[] = await response.json();
-        setHistory(data);
+        const data = await response.json();
+        setHistory(data.attendance_history);
         toast({
           title: "History Loaded",
-          description: `Found ${data.length} attendance records.`,
+          description: `Found ${data.attendance_history.length} attendance records.`,
         });
       } else {
         throw new Error('Failed to fetch attendance history');
@@ -55,6 +56,10 @@ export const AttendanceHistory: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
 
   const formatDate = (timestamp: string) => {
     return new Date(timestamp).toLocaleString();
@@ -72,20 +77,19 @@ export const AttendanceHistory: React.FC = () => {
         <CardContent className="space-y-6">
           <div className="flex gap-4 items-end">
             <div className="flex-1 space-y-2">
-              <Label htmlFor="userId">User ID</Label>
+              <Label htmlFor="selectedDate">Filter by Date (Optional)</Label>
               <Input
-                id="userId"
-                type="number"
-                placeholder="Enter user ID"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
+                id="selectedDate"
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
               />
             </div>
             <Button 
               onClick={fetchHistory}
-              disabled={isLoading || !userId}
+              disabled={isLoading}
             >
-              {isLoading ? 'Loading...' : 'View History'}
+              {isLoading ? 'Loading...' : 'Refresh History'}
             </Button>
           </div>
 
@@ -96,23 +100,19 @@ export const AttendanceHistory: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {history.map((record, index) => (
+                  {history.map((record) => (
                     <div 
-                      key={index}
+                      key={record.id}
                       className="flex justify-between items-center p-3 bg-muted rounded-lg"
                     >
                       <div>
-                        <p className="font-medium">Status: {record.status}</p>
+                        <p className="font-medium">{record.name} ({record.employee_id})</p>
                         <p className="text-sm text-muted-foreground">
                           {formatDate(record.timestamp)}
                         </p>
                       </div>
-                      <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        record.status === 'Present' 
-                          ? 'bg-accent text-accent-foreground' 
-                          : 'bg-muted-foreground text-muted'
-                      }`}>
-                        {record.status}
+                      <div className="px-3 py-1 rounded-full text-sm font-medium bg-accent text-accent-foreground">
+                        Present
                       </div>
                     </div>
                   ))}
@@ -121,7 +121,7 @@ export const AttendanceHistory: React.FC = () => {
             </Card>
           )}
 
-          {history.length === 0 && userId && !isLoading && (
+          {history.length === 0 && !isLoading && (
             <Card>
               <CardContent className="pt-6">
                 <div className="text-center text-muted-foreground">

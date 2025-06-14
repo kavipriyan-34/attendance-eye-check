@@ -50,17 +50,29 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
         console.log('Setting video srcObject...');
         videoRef.current.srcObject = mediaStream;
         setStream(mediaStream);
-        setIsStreamActive(true);
-        setDebugInfo('Video stream active');
+        setDebugInfo('Video stream set, waiting for ready...');
         
-        // Force play the video
-        try {
-          await videoRef.current.play();
-          console.log('Video playing successfully');
+        // Wait for video to be ready and playing before marking as active
+        const video = videoRef.current;
+        
+        const onPlaying = () => {
+          console.log('Video is now playing');
+          setIsStreamActive(true);
           setDebugInfo('Camera ready - video playing');
+          video.removeEventListener('playing', onPlaying);
+        };
+        
+        video.addEventListener('playing', onPlaying);
+        
+        // Try to play the video
+        try {
+          await video.play();
+          console.log('Video play() succeeded');
         } catch (playError) {
-          console.log('Auto-play failed, but stream is set:', playError);
-          setDebugInfo('Stream set - may need user interaction to play');
+          console.log('Auto-play failed:', playError);
+          setDebugInfo('Auto-play blocked - click video to start');
+          // Still set as active since stream is working, just needs user interaction
+          setIsStreamActive(true);
         }
       }
     } catch (error) {

@@ -102,6 +102,12 @@ class ApiService {
   async healthCheck(): Promise<{ status: string; timestamp: string }> {
     return this.makeRequest<{ status: string; timestamp: string }>('/health');
   }
+
+  async clearAllData(): Promise<{ success: boolean; message: string }> {
+    return this.makeRequest<{ success: boolean; message: string }>('/clear-data', {
+      method: 'POST',
+    });
+  }
 }
 
 export const apiService = new ApiService();

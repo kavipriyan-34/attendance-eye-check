@@ -341,6 +341,39 @@ def get_users():
         logger.error(f"Users error: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@app.route('/api/clear-data', methods=['POST'])
+def clear_all_data():
+    """Clear all data from database"""
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        try:
+            cursor = conn.cursor()
+            
+            # Clear attendance first (due to foreign key constraint)
+            cursor.execute("DELETE FROM attendance")
+            cursor.execute("DELETE FROM users")
+            
+            conn.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'All data cleared successfully'
+            })
+            
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"Clear data error: {e}")
+            return jsonify({'error': 'Failed to clear data'}), 500
+        finally:
+            conn.close()
+            
+    except Exception as e:
+        logger.error(f"Clear data error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 @app.route('/api/add-demo-data', methods=['GET', 'POST'])
 def add_demo_data():
     """Add demo data for testing attendance history"""

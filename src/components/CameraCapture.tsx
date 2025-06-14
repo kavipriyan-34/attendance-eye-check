@@ -103,11 +103,27 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       
       setDebugInfo('Camera access granted, setting up video...');
       
-      if (videoRef.current) {
-        console.log('Setting video srcObject...');
-        console.log('VideoRef current exists:', !!videoRef.current);
-        
-        try {
+      // Wait a bit to ensure video element is ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (!videoRef.current) {
+        console.error('VideoRef.current is still null after delay');
+        // Try to find the video element by other means
+        const videoElement = document.querySelector('video');
+        if (videoElement) {
+          console.log('Found video element via querySelector');
+          videoRef.current = videoElement as HTMLVideoElement;
+        } else {
+          console.error('No video element found in DOM');
+          throw new Error('Video element not ready. Please try again.');
+        }
+      }
+      
+      console.log('Setting video srcObject...');
+      console.log('VideoRef current exists:', !!videoRef.current);
+      
+      try {
+        if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
           console.log('Video srcObject set successfully');
           setStream(mediaStream);
@@ -124,15 +140,12 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
             setDebugInfo('Camera ready - video playing');
           } catch (playError) {
             console.log('Auto-play failed:', playError);
-            setDebugInfo('Stream active - click to play if needed');
+            setDebugInfo('Stream active - click video if needed');
           }
-        } catch (srcError) {
-          console.error('Error setting srcObject:', srcError);
-          throw new Error('Failed to set video source: ' + srcError.message);
         }
-      } else {
-        console.error('VideoRef.current is null');
-        throw new Error('Video element not available');
+      } catch (srcError) {
+        console.error('Error setting srcObject:', srcError);
+        throw new Error('Failed to set video source: ' + srcError.message);
       }
     } catch (error) {
       console.error('Error accessing camera:', error);

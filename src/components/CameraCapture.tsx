@@ -44,36 +44,30 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       });
       
       console.log('Camera access granted, stream received:', mediaStream);
+      console.log('Stream tracks:', mediaStream.getTracks());
       setDebugInfo('Camera access granted, setting up video...');
       
-      if (videoRef.current) {
+      if (videoRef.current && mediaStream.getTracks().length > 0) {
         console.log('Setting video srcObject...');
         videoRef.current.srcObject = mediaStream;
         setStream(mediaStream);
-        setDebugInfo('Video stream set, waiting for ready...');
         
-        // Wait for video to be ready and playing before marking as active
-        const video = videoRef.current;
-        
-        const onPlaying = () => {
-          console.log('Video is now playing');
-          setIsStreamActive(true);
-          setDebugInfo('Camera ready - video playing');
-          video.removeEventListener('playing', onPlaying);
-        };
-        
-        video.addEventListener('playing', onPlaying);
+        // Set as active immediately since we have a valid stream
+        setIsStreamActive(true);
+        setDebugInfo('Video stream active');
+        console.log('Stream marked as active');
         
         // Try to play the video
         try {
-          await video.play();
-          console.log('Video play() succeeded');
+          await videoRef.current.play();
+          console.log('Video playing successfully');
+          setDebugInfo('Camera ready - video playing');
         } catch (playError) {
           console.log('Auto-play failed:', playError);
-          setDebugInfo('Auto-play blocked - click video to start');
-          // Still set as active since stream is working, just needs user interaction
-          setIsStreamActive(true);
+          setDebugInfo('Stream active - click to play if needed');
         }
+      } else {
+        throw new Error('No video tracks in stream');
       }
     } catch (error) {
       console.error('Error accessing camera:', error);

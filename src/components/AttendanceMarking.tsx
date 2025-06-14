@@ -4,6 +4,7 @@ import { CameraCapture } from './CameraCapture';
 import { useToast } from '@/hooks/use-toast';
 import { Clock, User, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { findUserByFace, addAttendanceRecord } from '@/lib/mockDatabase';
 
 interface AttendanceResult {
   success: boolean;
@@ -22,31 +23,37 @@ export const AttendanceMarking: React.FC = () => {
     setIsProcessing(true);
     
     try {
-      // Mock face recognition for demo purposes
+      // Mock face recognition for demo purposes using registered users
       // In production, replace this with actual API call
       await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate processing time
       
-      // Mock successful recognition (you can make this random for demo)
-      const mockUsers = [
-        { user_name: 'John Doe', employee_id: 'EMP001', department: 'Engineering' },
-        { user_name: 'Jane Smith', employee_id: 'EMP002', department: 'Marketing' },
-        { user_name: 'Mike Johnson', employee_id: 'EMP003', department: 'Sales' },
-      ];
+      // Find a registered user (simulate face recognition)
+      const recognizedUser = findUserByFace();
       
-      const randomUser = mockUsers[Math.floor(Math.random() * mockUsers.length)];
-      const timestamp = new Date().toISOString();
+      if (!recognizedUser) {
+        setLastResult({ success: false, message: 'No registered users found. Please register first.' });
+        toast({
+          title: "Recognition Failed",
+          description: "No registered users found. Please register a user first.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Add attendance record
+      const attendanceRecord = addAttendanceRecord(recognizedUser);
       
       const mockResult: AttendanceResult = {
         success: true,
-        user_name: randomUser.user_name,
-        employee_id: randomUser.employee_id,
-        timestamp: timestamp
+        user_name: attendanceRecord.user_name,
+        employee_id: attendanceRecord.employee_id,
+        timestamp: attendanceRecord.timestamp
       };
       
       setLastResult(mockResult);
       toast({
         title: "Attendance Marked",
-        description: `Welcome ${mockResult.user_name}! Attendance recorded at ${new Date(timestamp).toLocaleTimeString()} (Demo mode)`
+        description: `Welcome ${mockResult.user_name}! Attendance recorded at ${new Date(attendanceRecord.timestamp).toLocaleTimeString()}`
       });
       
       // Log the captured data for debugging

@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { CameraCapture } from './CameraCapture';
 import { useToast } from '@/hooks/use-toast';
 import { UserPlus } from 'lucide-react';
+import { addRegisteredUser } from '@/lib/mockDatabase';
 
 export const UserRegistration: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -43,14 +44,20 @@ export const UserRegistration: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Mock successful registration for demo purposes
+      // Store user in mock database
       // In production, replace this with actual API call
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
       
-      // Simulate successful response
+      // Add user to localStorage-based mock database
+      addRegisteredUser({
+        name: formData.name,
+        employee_id: formData.employee_id,
+        department: formData.department || 'Not specified'
+      });
+      
       toast({
         title: "Registration Successful",
-        description: `User ${formData.name} registered successfully! (Demo mode - no backend connected)`
+        description: `User ${formData.name} registered successfully! You can now use face recognition for attendance.`
       });
       
       // Reset form

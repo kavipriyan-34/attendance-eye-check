@@ -5,15 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { History, Search, RefreshCw, Calendar, User } from 'lucide-react';
+import { getAttendanceRecords, initializeDemoData, type AttendanceRecord } from '@/lib/mockDatabase';
 
-interface AttendanceRecord {
-  id: number;
-  user_name: string;
-  employee_id: string;
-  department?: string;
-  timestamp: string;
-  date: string;
-}
 
 export const AttendanceHistory: React.FC = () => {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
@@ -26,49 +19,19 @@ export const AttendanceHistory: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Mock attendance data for demo purposes
-      // In production, replace this with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+      // Initialize demo data if needed
+      initializeDemoData();
       
-      const mockRecords: AttendanceRecord[] = [
-        {
-          id: 1,
-          user_name: 'John Doe',
-          employee_id: 'EMP001',
-          department: 'Engineering',
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-          date: new Date().toISOString().split('T')[0]
-        },
-        {
-          id: 2,
-          user_name: 'Jane Smith',
-          employee_id: 'EMP002',
-          department: 'Marketing',
-          timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
-          date: new Date().toISOString().split('T')[0]
-        },
-        {
-          id: 3,
-          user_name: 'Mike Johnson',
-          employee_id: 'EMP003',
-          department: 'Sales',
-          timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
-          date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        },
-        {
-          id: 4,
-          user_name: 'Sarah Wilson',
-          employee_id: 'EMP004',
-          department: 'HR',
-          timestamp: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(), // Yesterday
-          date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        }
-      ];
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Get actual attendance records from localStorage
+      const mockRecords = getAttendanceRecords();
       
       setRecords(mockRecords);
       setFilteredRecords(mockRecords);
       
-      console.log('Mock attendance history loaded:', mockRecords);
+      console.log('Attendance history loaded:', mockRecords);
       
     } catch (error) {
       console.error('Error fetching attendance history:', error);

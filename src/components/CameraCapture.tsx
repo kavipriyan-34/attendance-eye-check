@@ -19,10 +19,22 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isStreamActive, setIsStreamActive] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string>('');
   const { toast } = useToast();
 
   const startCamera = async () => {
+    console.log('Starting camera...');
+    setDebugInfo('Starting camera...');
+    
     try {
+      // Check if getUserMedia is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('getUserMedia not supported');
+      }
+      
+      console.log('Requesting camera access...');
+      setDebugInfo('Requesting camera access...');
+      
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { 
           width: { ideal: 640 },
@@ -31,18 +43,39 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
         }
       });
       
+      console.log('Camera access granted, stream received:', mediaStream);
+      setDebugInfo('Camera access granted');
+      
       if (videoRef.current) {
+        console.log('Setting video srcObject...');
         videoRef.current.srcObject = mediaStream;
-        await videoRef.current.play();
-        setStream(mediaStream);
-        setIsStreamActive(true);
-        console.log('Camera started successfully');
+        
+        // Wait for video to be ready
+        videoRef.current.onloadedmetadata = () => {
+          console.log('Video metadata loaded, playing...');
+          setDebugInfo('Video loaded, playing...');
+          videoRef.current?.play().then(() => {
+            console.log('Video playing successfully');
+            setDebugInfo('Video playing');
+            setStream(mediaStream);
+            setIsStreamActive(true);
+          }).catch(error => {
+            console.error('Error playing video:', error);
+            setDebugInfo('Error playing video: ' + error.message);
+          });
+        };
+        
+        videoRef.current.onerror = (error) => {
+          console.error('Video error:', error);
+          setDebugInfo('Video error: ' + error);
+        };
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
+      setDebugInfo('Camera error: ' + (error as Error).message);
       toast({
         title: "Camera Error",
-        description: "Unable to access camera. Please check permissions.",
+        description: `Unable to access camera: ${(error as Error).message}`,
         variant: "destructive"
       });
     }
@@ -137,6 +170,12 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {debugInfo && (
+          <div className="bg-muted p-3 rounded-lg">
+            <p className="text-sm text-muted-foreground">Debug: {debugInfo}</p>
+          </div>
+        )}
+        
         <div className="relative bg-muted rounded-lg overflow-hidden aspect-video">
           {isStreamActive ? (
             <video
@@ -151,6 +190,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
               <div className="text-center space-y-2">
                 <Camera className="w-12 h-12 mx-auto text-muted-foreground" />
                 <p className="text-muted-foreground">Camera not active</p>
+                {debugInfo && <p className="text-xs text-muted-foreground">{debugInfo}</p>}
               </div>
             </div>
           )}

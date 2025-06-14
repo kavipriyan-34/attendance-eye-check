@@ -341,7 +341,7 @@ def get_users():
         logger.error(f"Users error: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
-@app.route('/api/add-demo-data', methods=['POST'])
+@app.route('/api/add-demo-data', methods=['GET', 'POST'])
 def add_demo_data():
     """Add demo data for testing attendance history"""
     try:

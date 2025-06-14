@@ -43,31 +43,27 @@ export const UserRegistration: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('http://localhost:5000/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          image: capturedImage
-        }),
-      });
-
-      const data = await response.json();
+      // Mock successful registration for demo purposes
+      // In production, replace this with actual API call
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
       
-      if (response.ok) {
-        toast({
-          title: "Registration Successful",
-          description: `User ${formData.name} registered successfully!`
-        });
-        
-        // Reset form
-        setFormData({ name: '', employee_id: '', department: '' });
-        setCapturedImage('');
-      } else {
-        throw new Error(data.error || 'Registration failed');
-      }
+      // Simulate successful response
+      toast({
+        title: "Registration Successful",
+        description: `User ${formData.name} registered successfully! (Demo mode - no backend connected)`
+      });
+      
+      // Reset form
+      setFormData({ name: '', employee_id: '', department: '' });
+      setCapturedImage('');
+      
+      // Log the captured data for debugging
+      console.log('User registration data:', {
+        ...formData,
+        imageSize: capturedImage.length,
+        timestamp: new Date().toISOString()
+      });
+      
     } catch (error) {
       console.error('Registration error:', error);
       toast({

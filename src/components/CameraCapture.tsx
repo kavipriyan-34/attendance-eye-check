@@ -44,31 +44,24 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       });
       
       console.log('Camera access granted, stream received:', mediaStream);
-      setDebugInfo('Camera access granted');
+      setDebugInfo('Camera access granted, setting up video...');
       
       if (videoRef.current) {
         console.log('Setting video srcObject...');
         videoRef.current.srcObject = mediaStream;
+        setStream(mediaStream);
+        setIsStreamActive(true);
+        setDebugInfo('Video stream active');
         
-        // Wait for video to be ready
-        videoRef.current.onloadedmetadata = () => {
-          console.log('Video metadata loaded, playing...');
-          setDebugInfo('Video loaded, playing...');
-          videoRef.current?.play().then(() => {
-            console.log('Video playing successfully');
-            setDebugInfo('Video playing');
-            setStream(mediaStream);
-            setIsStreamActive(true);
-          }).catch(error => {
-            console.error('Error playing video:', error);
-            setDebugInfo('Error playing video: ' + error.message);
-          });
-        };
-        
-        videoRef.current.onerror = (error) => {
-          console.error('Video error:', error);
-          setDebugInfo('Video error: ' + error);
-        };
+        // Force play the video
+        try {
+          await videoRef.current.play();
+          console.log('Video playing successfully');
+          setDebugInfo('Camera ready - video playing');
+        } catch (playError) {
+          console.log('Auto-play failed, but stream is set:', playError);
+          setDebugInfo('Stream set - may need user interaction to play');
+        }
       }
     } catch (error) {
       console.error('Error accessing camera:', error);

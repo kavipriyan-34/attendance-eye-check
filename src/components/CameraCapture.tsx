@@ -55,24 +55,68 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   };
 
   const captureImage = () => {
-    if (videoRef.current && canvasRef.current) {
-      const canvas = canvasRef.current;
-      const video = videoRef.current;
-      const context = canvas.getContext('2d');
-      
-      if (context) {
+    if (!videoRef.current || !canvasRef.current) {
+      toast({
+        title: "Capture Error",
+        description: "Camera not ready. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    const context = canvas.getContext('2d');
+    
+    // Check if video is ready
+    if (video.readyState !== 4) {
+      toast({
+        title: "Capture Error",
+        description: "Video is still loading. Please wait and try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check if video has dimensions
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      toast({
+        title: "Capture Error",
+        description: "Video stream not ready. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (context) {
+      try {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0);
         
         const imageData = canvas.toDataURL('image/jpeg', 0.8);
+        console.log('Image captured, data length:', imageData.length);
+        
         onCapture(imageData);
         
         toast({
           title: "Image Captured",
           description: "Face image captured successfully!"
         });
+      } catch (error) {
+        console.error('Error capturing image:', error);
+        toast({
+          title: "Capture Error",
+          description: "Failed to capture image. Please try again.",
+          variant: "destructive"
+        });
       }
+    } else {
+      toast({
+        title: "Capture Error",
+        description: "Unable to get canvas context.",
+        variant: "destructive"
+      });
     }
   };
 

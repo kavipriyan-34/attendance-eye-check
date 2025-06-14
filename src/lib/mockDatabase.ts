@@ -62,35 +62,23 @@ export const addAttendanceRecord = (user: RegisteredUser): AttendanceRecord => {
   return newRecord;
 };
 
-// Initialize with some demo data if empty
+// Clear all mock data (for testing purposes)
+export const clearAllData = (): void => {
+  localStorage.removeItem('faceattend_users');
+  localStorage.removeItem('faceattend_attendance');
+};
 export const initializeDemoData = (): void => {
   const users = getRegisteredUsers();
-  const records = getAttendanceRecords();
   
   if (users.length === 0) {
-    // Add some demo users
-    const demoUsers = [
-      { name: 'Demo User', employee_id: 'DEMO001', department: 'Demo Department' }
-    ];
-    
-    demoUsers.forEach(user => addRegisteredUser(user));
-  }
-  
-  if (records.length === 0 && users.length > 0) {
-    // Add some demo attendance records
-    const now = new Date();
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    
-    const demoRecord: AttendanceRecord = {
-      id: Date.now(),
-      user_name: 'Demo User',
-      employee_id: 'DEMO001',
-      department: 'Demo Department',
-      timestamp: yesterday.toISOString(),
-      date: yesterday.toISOString().split('T')[0]
+    // Only add one demo user to get started
+    const demoUser = { 
+      name: 'Demo User', 
+      employee_id: 'DEMO001', 
+      department: 'Demo Department' 
     };
     
-    const records = [demoRecord];
-    localStorage.setItem('faceattend_attendance', JSON.stringify(records));
+    addRegisteredUser(demoUser);
+    console.log('Added demo user for initial setup');
   }
 };

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { History, Search, RefreshCw, Calendar, User } from 'lucide-react';
-import { getAttendanceRecords, initializeDemoData, type AttendanceRecord } from '@/lib/mockDatabase';
+import { getAttendanceRecords, type AttendanceRecord } from '@/lib/mockDatabase';
 
 
 export const AttendanceHistory: React.FC = () => {
@@ -19,13 +19,10 @@ export const AttendanceHistory: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Initialize demo data if needed
-      initializeDemoData();
-      
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Get actual attendance records from localStorage
+      // Get actual attendance records from localStorage (only real ones)
       const mockRecords = getAttendanceRecords();
       
       setRecords(mockRecords);

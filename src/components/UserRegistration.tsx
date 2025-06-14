@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { CameraCapture } from './CameraCapture';
 import { useToast } from '@/hooks/use-toast';
 import { UserPlus } from 'lucide-react';
-import { addRegisteredUser } from '@/lib/mockDatabase';
+import { addRegisteredUser, initializeDemoData } from '@/lib/mockDatabase';
 
 export const UserRegistration: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +18,11 @@ export const UserRegistration: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    // Initialize demo data when component mounts
+    initializeDemoData();
+  }, []);
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,

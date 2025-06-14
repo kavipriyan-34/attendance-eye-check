@@ -35,19 +35,66 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       console.log('Requesting camera access...');
       setDebugInfo('Requesting camera access...');
       
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          facingMode: 'user'
+      // Try multiple constraint configurations
+      const constraints = [
+        // Try with ideal constraints first
+        {
+          video: { 
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+            facingMode: 'user'
+          }
+        },
+        // Fallback to basic video constraint
+        {
+          video: {
+            facingMode: 'user'
+          }
+        },
+        // Final fallback - any video
+        {
+          video: true
         }
-      });
+      ];
+      
+      let mediaStream = null;
+      let lastError = null;
+      
+      for (let i = 0; i < constraints.length; i++) {
+        try {
+          console.log(`Trying camera constraint ${i + 1}:`, constraints[i]);
+          setDebugInfo(`Trying camera access method ${i + 1}...`);
+          
+          mediaStream = await navigator.mediaDevices.getUserMedia(constraints[i]);
+          
+          if (mediaStream && mediaStream.getTracks().length > 0) {
+            console.log('Camera access successful with constraint', i + 1);
+            break;
+          }
+        } catch (error) {
+          console.log(`Constraint ${i + 1} failed:`, error);
+          lastError = error;
+          mediaStream = null;
+        }
+      }
+      
+      if (!mediaStream) {
+        throw lastError || new Error('All camera access methods failed');
+      }
       
       console.log('Camera access granted, stream received:', mediaStream);
       console.log('Stream tracks:', mediaStream.getTracks());
+      console.log('Video tracks:', mediaStream.getVideoTracks());
+      
+      // Check if we have video tracks
+      const videoTracks = mediaStream.getVideoTracks();
+      if (videoTracks.length === 0) {
+        throw new Error('No video tracks available. Camera may be in use by another application.');
+      }
+      
       setDebugInfo('Camera access granted, setting up video...');
       
-      if (videoRef.current && mediaStream.getTracks().length > 0) {
+      if (videoRef.current) {
         console.log('Setting video srcObject...');
         videoRef.current.srcObject = mediaStream;
         setStream(mediaStream);
@@ -66,8 +113,6 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
           console.log('Auto-play failed:', playError);
           setDebugInfo('Stream active - click to play if needed');
         }
-      } else {
-        throw new Error('No video tracks in stream');
       }
     } catch (error) {
       console.error('Error accessing camera:', error);

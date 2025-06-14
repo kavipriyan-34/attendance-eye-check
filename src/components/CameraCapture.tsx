@@ -33,8 +33,10 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        await videoRef.current.play();
         setStream(mediaStream);
         setIsStreamActive(true);
+        console.log('Camera started successfully');
       }
     } catch (error) {
       console.error('Error accessing camera:', error);

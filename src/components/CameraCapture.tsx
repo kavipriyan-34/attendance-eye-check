@@ -254,27 +254,26 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
         )}
         
         <div className="relative bg-muted rounded-lg overflow-hidden aspect-video">
-          {isStreamActive ? (
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-full object-cover cursor-pointer"
-              onClick={async () => {
-                if (videoRef.current) {
-                  try {
-                    await videoRef.current.play();
-                    console.log('Video playing after click');
-                    setDebugInfo('Camera active - video playing');
-                  } catch (err) {
-                    console.error('Error playing video after click:', err);
-                  }
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className={`w-full h-full object-cover cursor-pointer ${isStreamActive ? 'block' : 'hidden'}`}
+            onClick={async () => {
+              if (videoRef.current) {
+                try {
+                  await videoRef.current.play();
+                  console.log('Video playing after click');
+                  setDebugInfo('Camera active - video playing');
+                } catch (err) {
+                  console.error('Error playing video after click:', err);
                 }
-              }}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
+              }
+            }}
+          />
+          {!isStreamActive && (
+            <div className="absolute inset-0 w-full h-full flex items-center justify-center">
               <div className="text-center space-y-2">
                 <Camera className="w-12 h-12 mx-auto text-muted-foreground" />
                 <p className="text-muted-foreground">Camera not active</p>

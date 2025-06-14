@@ -1,43 +1,46 @@
-# Face Attendance Backend
+# Simple Flask Attendance Backend
 
-## Setup Instructions
+## Quick Setup
 
-### 1. Install Dependencies
+1. **Install dependencies:**
 ```bash
 cd backend
 pip install -r requirements.txt
 ```
 
-### 2. Database Setup
-1. Install PostgreSQL
-2. Create database:
-   ```sql
-   CREATE DATABASE attendance_app;
-   ```
-3. Run the database setup:
-   ```bash
-   psql -U postgres -d attendance_app -f database_setup.sql
-   ```
-
-### 3. Environment Configuration
-1. Copy `.env` file and update your database credentials
-2. Update `DB_PASSWORD` with your PostgreSQL password
-
-### 4. Run the Server
+2. **Run the server:**
 ```bash
 python app.py
 ```
 
-The server will run on `http://localhost:5000`
+The server will run on `http://localhost:5000` and create a SQLite database automatically.
 
 ## API Endpoints
 
-- `POST /api/register` - Register new user with face
-- `POST /api/mark-attendance` - Mark attendance using face
-- `GET /api/attendance-history` - Get attendance records
-- `GET /api/users` - Get all registered users
 - `GET /api/health` - Health check
+- `POST /api/register` - Register new user
+- `POST /api/mark-attendance` - Mark attendance 
+- `GET /api/attendance-history` - Get attendance records
+- `GET /api/users` - Get all users
+- `POST /api/add-demo-data` - Add demo data for testing
 
-## Frontend Integration
+## Features
 
-Your React frontend will automatically connect to this backend on localhost:5000.
+- SQLite database (no external DB required)
+- Automatic database initialization
+- Face recognition simulation
+- CORS enabled for frontend
+- Proper attendance history tracking
+- Demo data endpoint for testing
+
+## Testing
+
+After starting the server, you can test by calling:
+```bash
+curl http://localhost:5000/api/health
+```
+
+Or add demo data:
+```bash
+curl -X POST http://localhost:5000/api/add-demo-data
+```

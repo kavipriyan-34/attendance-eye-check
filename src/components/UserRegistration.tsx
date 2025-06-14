@@ -5,33 +5,27 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CameraCapture } from './CameraCapture';
 import { useToast } from '@/hooks/use-toast';
-import { Users } from 'lucide-react';
-
-const API_BASE_URL = 'http://localhost:5000';
+import { UserPlus } from 'lucide-react';
 
 export const UserRegistration: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
-    employee_id: ''
+    employee_id: '',
+    department: ''
   });
   const [capturedImage, setCapturedImage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCapturing, setIsCapturing] = useState(false);
   const { toast } = useToast();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
+    setFormData({
+      ...formData,
       [e.target.name]: e.target.value
-    }));
+    });
   };
 
   const handleImageCapture = (imageData: string) => {
     setCapturedImage(imageData);
-    toast({
-      title: "Image Captured",
-      description: "Face image captured successfully!",
-    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,8 +34,8 @@ export const UserRegistration: React.FC = () => {
     if (!formData.name || !formData.employee_id || !capturedImage) {
       toast({
         title: "Missing Information",
-        description: "Please fill all fields and capture your face image.",
-        variant: "destructive",
+        description: "Please fill all fields and capture an image.",
+        variant: "destructive"
       });
       return;
     }
@@ -49,14 +43,13 @@ export const UserRegistration: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/api/register`, {
+      const response = await fetch('http://localhost:5000/api/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: formData.name,
-          employee_id: formData.employee_id,
+          ...formData,
           image: capturedImage
         }),
       });
@@ -66,20 +59,21 @@ export const UserRegistration: React.FC = () => {
       if (response.ok) {
         toast({
           title: "Registration Successful",
-          description: `Welcome ${formData.name}! You can now mark attendance.`,
+          description: `User ${formData.name} registered successfully!`
         });
         
         // Reset form
-        setFormData({ name: '', employee_id: '' });
+        setFormData({ name: '', employee_id: '', department: '' });
         setCapturedImage('');
       } else {
         throw new Error(data.error || 'Registration failed');
       }
     } catch (error) {
+      console.error('Registration error:', error);
       toast({
         title: "Registration Failed",
-        description: error instanceof Error ? error.message : 'An error occurred during registration.',
-        variant: "destructive",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);
@@ -87,66 +81,87 @@ export const UserRegistration: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5" />
+            <UserPlus className="w-5 h-5" />
             Register New User
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div>
                 <Label htmlFor="name">Full Name</Label>
                 <Input
                   id="name"
                   name="name"
                   type="text"
-                  placeholder="Enter your full name"
                   value={formData.name}
                   onChange={handleInputChange}
+                  placeholder="Enter full name"
                   required
                 />
               </div>
-              <div className="space-y-2">
+              
+              <div>
                 <Label htmlFor="employee_id">Employee ID</Label>
                 <Input
                   id="employee_id"
                   name="employee_id"
                   type="text"
-                  placeholder="Enter your employee ID"
                   value={formData.employee_id}
                   onChange={handleInputChange}
+                  placeholder="Enter employee ID"
                   required
                 />
               </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Face Capture</Label>
-              <CameraCapture 
-                onCapture={handleImageCapture}
-                isCapturing={isCapturing}
-              />
-              {capturedImage && (
-                <div className="text-center">
-                  <p className="text-sm text-accent font-medium">✓ Face image captured successfully</p>
-                </div>
-              )}
+              
+              <div className="md:col-span-2">
+                <Label htmlFor="department">Department</Label>
+                <Input
+                  id="department"
+                  name="department"
+                  type="text"
+                  value={formData.department}
+                  onChange={handleInputChange}
+                  placeholder="Enter department"
+                />
+              </div>
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full" 
+            <Button
+              type="submit"
               disabled={isSubmitting || !capturedImage}
+              className="w-full"
             >
               {isSubmitting ? 'Registering...' : 'Register User'}
             </Button>
           </form>
         </CardContent>
       </Card>
+
+      <CameraCapture
+        onCapture={handleImageCapture}
+        isCapturing={isSubmitting}
+        title="Capture Face for Registration"
+      />
+
+      {capturedImage && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Captured Image</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <img
+              src={capturedImage}
+              alt="Captured face"
+              className="w-full max-w-md mx-auto rounded-lg"
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

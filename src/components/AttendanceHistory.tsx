@@ -1,135 +1,182 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Users } from 'lucide-react';
-
-const API_BASE_URL = 'http://localhost:5000';
+import { History, Search, RefreshCw, Calendar, User } from 'lucide-react';
 
 interface AttendanceRecord {
   id: number;
-  name: string;
+  user_name: string;
   employee_id: string;
+  department?: string;
   timestamp: string;
   date: string;
-  time: string;
 }
 
 export const AttendanceHistory: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState('');
-  const [history, setHistory] = useState<AttendanceRecord[]>([]);
+  const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [filteredRecords, setFilteredRecords] = useState<AttendanceRecord[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const fetchHistory = async () => {
+  const fetchAttendanceHistory = async () => {
     setIsLoading(true);
     
     try {
-      const params = new URLSearchParams();
-      if (selectedDate) {
-        params.append('date', selectedDate);
-      }
-      
-      const url = `${API_BASE_URL}/api/attendance-history${params.toString() ? '?' + params.toString() : ''}`;
-      const response = await fetch(url);
+      const response = await fetch('http://localhost:5000/api/attendance-history');
+      const data = await response.json();
       
       if (response.ok) {
-        const data = await response.json();
-        setHistory(data.attendance_history);
-        toast({
-          title: "History Loaded",
-          description: `Found ${data.attendance_history.length} attendance records.`,
-        });
+        setRecords(data.records || []);
+        setFilteredRecords(data.records || []);
       } else {
-        throw new Error('Failed to fetch attendance history');
+        throw new Error(data.error || 'Failed to fetch attendance history');
       }
     } catch (error) {
+      console.error('Error fetching attendance history:', error);
       toast({
-        title: "Error",
-        description: "Failed to fetch attendance history. Please try again.",
-        variant: "destructive",
+        title: "Fetch Error",
+        description: "Unable to load attendance history. Please try again.",
+        variant: "destructive"
       });
-      setHistory([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchHistory();
-  }, []);
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    
+    if (!value.trim()) {
+      setFilteredRecords(records);
+      return;
+    }
 
-  const formatDate = (timestamp: string) => {
-    return new Date(timestamp).toLocaleString();
+    const filtered = records.filter(record => 
+      record.user_name.toLowerCase().includes(value.toLowerCase()) ||
+      record.employee_id.toLowerCase().includes(value.toLowerCase()) ||
+      (record.department && record.department.toLowerCase().includes(value.toLowerCase()))
+    );
+    
+    setFilteredRecords(filtered);
   };
 
+  useEffect(() => {
+    fetchAttendanceHistory();
+  }, []);
+
+  const formatTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString([], {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const groupedRecords = filteredRecords.reduce((groups, record) => {
+    const date = record.date;
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(record);
+    return groups;
+  }, {} as Record<string, AttendanceRecord[]>);
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5" />
+            <History className="w-5 h-5" />
             Attendance History
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex gap-4 items-end">
-            <div className="flex-1 space-y-2">
-              <Label htmlFor="selectedDate">Filter by Date (Optional)</Label>
+        <CardContent>
+          <div className="flex gap-2 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
               <Input
-                id="selectedDate"
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
+                placeholder="Search by name, ID, or department..."
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="pl-9"
               />
             </div>
             <Button 
-              onClick={fetchHistory}
+              onClick={fetchAttendanceHistory}
               disabled={isLoading}
+              variant="outline"
+              size="icon"
             >
-              {isLoading ? 'Loading...' : 'Refresh History'}
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
           </div>
 
-          {history.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Attendance Records</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {history.map((record) => (
-                    <div 
-                      key={record.id}
-                      className="flex justify-between items-center p-3 bg-muted rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium">{record.name} ({record.employee_id})</p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatDate(record.timestamp)}
-                        </p>
-                      </div>
-                      <div className="px-3 py-1 rounded-full text-sm font-medium bg-accent text-accent-foreground">
-                        Present
-                      </div>
+          {isLoading ? (
+            <div className="text-center py-8">
+              <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-muted-foreground" />
+              <p className="text-muted-foreground">Loading attendance records...</p>
+            </div>
+          ) : filteredRecords.length === 0 ? (
+            <div className="text-center py-8">
+              <History className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">
+                {searchTerm ? 'No records found matching your search.' : 'No attendance records found.'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {Object.entries(groupedRecords)
+                .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
+                .map(([date, dayRecords]) => (
+                  <div key={date} className="space-y-2">
+                    <div className="flex items-center gap-2 px-2 py-1 bg-muted rounded-md">
+                      <Calendar className="w-4 h-4" />
+                      <span className="font-medium">{formatDate(date)}</span>
+                      <Badge variant="secondary" className="ml-auto">
+                        {dayRecords.length} records
+                      </Badge>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {history.length === 0 && !isLoading && (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center text-muted-foreground">
-                  <Users className="w-12 h-12 mx-auto mb-2" />
-                  <p>No attendance records found for this user.</p>
-                </div>
-              </CardContent>
-            </Card>
+                    
+                    <div className="space-y-2 pl-2">
+                      {dayRecords
+                        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                        .map((record) => (
+                          <Card key={record.id} className="p-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <User className="w-4 h-4 text-primary" />
+                                </div>
+                                <div>
+                                  <div className="font-medium">{record.user_name}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    ID: {record.employee_id}
+                                    {record.department && ` • ${record.department}`}
+                                  </div>
+                                </div>
+                              </div>
+                              <Badge variant="outline">
+                                {formatTime(record.timestamp)}
+                              </Badge>
+                            </div>
+                          </Card>
+                        ))}
+                    </div>
+                  </div>
+                ))}
+            </div>
           )}
         </CardContent>
       </Card>

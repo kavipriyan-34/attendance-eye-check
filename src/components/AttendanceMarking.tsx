@@ -2,29 +2,27 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CameraCapture } from './CameraCapture';
 import { useToast } from '@/hooks/use-toast';
-import { Camera } from 'lucide-react';
-
-const API_BASE_URL = 'http://localhost:5000';
+import { Clock, User, CheckCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface AttendanceResult {
-  status: 'success' | 'failed';
-  message: string;
-  user_id?: number;
+  success: boolean;
   user_name?: string;
-  match_distance?: number;
+  employee_id?: string;
+  timestamp?: string;
+  message?: string;
 }
 
 export const AttendanceMarking: React.FC = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [lastResult, setLastResult] = useState<AttendanceResult | null>(null);
   const { toast } = useToast();
 
   const handleImageCapture = async (imageData: string) => {
-    setIsSubmitting(true);
-    setLastResult(null);
+    setIsProcessing(true);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/api/mark-attendance`, {
+      const response = await fetch('http://localhost:5000/api/mark-attendance', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -34,99 +32,90 @@ export const AttendanceMarking: React.FC = () => {
         }),
       });
 
-      const data: AttendanceResult = await response.json();
-      setLastResult(data);
+      const data = await response.json();
       
-      if (response.ok && data.status === 'success') {
+      if (response.ok && data.success) {
+        setLastResult(data);
         toast({
           title: "Attendance Marked",
-          description: data.message,
+          description: `Welcome ${data.user_name}! Attendance recorded at ${new Date(data.timestamp).toLocaleTimeString()}`
         });
       } else {
+        setLastResult({ success: false, message: data.error || 'Face not recognized' });
         toast({
-          title: "Attendance Failed",
-          description: data.message,
-          variant: "destructive",
+          title: "Recognition Failed",
+          description: data.error || "Face not recognized. Please try again.",
+          variant: "destructive"
         });
       }
     } catch (error) {
-      const errorMessage = 'Failed to connect to server. Please check your connection.';
-      setLastResult({
-        status: 'failed',
-        message: errorMessage
-      });
+      console.error('Attendance marking error:', error);
+      setLastResult({ success: false, message: 'Network error occurred' });
       toast({
         title: "Connection Error",
-        description: errorMessage,
-        variant: "destructive",
+        description: "Unable to connect to server. Please try again.",
+        variant: "destructive"
       });
     } finally {
-      setIsSubmitting(false);
+      setIsProcessing(false);
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Camera className="w-5 h-5" />
+            <Clock className="w-5 h-5" />
             Mark Attendance
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="text-center space-y-2">
-            <p className="text-muted-foreground">
-              Position your face in the camera and capture to mark attendance
-            </p>
-          </div>
+        <CardContent>
+          <p className="text-muted-foreground mb-4">
+            Position your face in the camera and capture to mark attendance
+          </p>
           
-          <CameraCapture 
-            onCapture={handleImageCapture}
-            isCapturing={isSubmitting}
-          />
-
           {lastResult && (
-            <Card className={`border-2 ${
-              lastResult.status === 'success' 
-                ? 'border-accent bg-accent/5' 
-                : 'border-destructive bg-destructive/5'
-            }`}>
-              <CardContent className="pt-6">
-                <div className="text-center space-y-2">
-                  <div className={`text-lg font-semibold ${
-                    lastResult.status === 'success' 
-                      ? 'text-accent' 
-                      : 'text-destructive'
-                  }`}>
-                    {lastResult.status === 'success' ? '✓ Success' : '✗ Failed'}
-                  </div>
-                  
-                  <p className="text-foreground font-medium">
-                    {lastResult.message}
-                  </p>
-                  
-                  {lastResult.user_name && (
-                    <p className="text-lg font-bold text-primary">
-                      Welcome, {lastResult.user_name}!
-                    </p>
-                  )}
-                  
-                  {lastResult.match_distance !== undefined && (
+            <div className="mb-4 p-4 rounded-lg border">
+              {lastResult.success ? (
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-8 h-8 text-green-500" />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="secondary" className="gap-1">
+                        <User className="w-3 h-3" />
+                        {lastResult.user_name}
+                      </Badge>
+                      <Badge variant="outline">
+                        ID: {lastResult.employee_id}
+                      </Badge>
+                    </div>
                     <p className="text-sm text-muted-foreground">
-                      Match confidence: {(1 - lastResult.match_distance).toFixed(3)}
+                      Attendance marked at {lastResult.timestamp ? new Date(lastResult.timestamp).toLocaleString() : 'Unknown time'}
                     </p>
-                  )}
-                  
-                  <p className="text-xs text-muted-foreground">
-                    {new Date().toLocaleString()}
-                  </p>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <User className="w-4 h-4 text-destructive" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-destructive">Recognition Failed</p>
+                    <p className="text-sm text-muted-foreground">{lastResult.message}</p>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
+
+      <CameraCapture
+        onCapture={handleImageCapture}
+        isCapturing={isProcessing}
+        title="Face Recognition for Attendance"
+      />
     </div>
   );
 };

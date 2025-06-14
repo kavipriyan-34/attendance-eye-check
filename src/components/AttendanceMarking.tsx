@@ -4,13 +4,15 @@ import { CameraCapture } from './CameraCapture';
 import { useToast } from '@/hooks/use-toast';
 import { Clock, User, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { findUserByFace, addAttendanceRecord } from '@/lib/mockDatabase';
+import { apiService } from '@/lib/api';
 
 interface AttendanceResult {
   success: boolean;
   user_name?: string;
   employee_id?: string;
+  department?: string;
   timestamp?: string;
+  confidence?: number;
   message?: string;
 }
 
@@ -23,52 +25,37 @@ export const AttendanceMarking: React.FC = () => {
     setIsProcessing(true);
     
     try {
-      // Mock face recognition for demo purposes using registered users
-      // In production, replace this with actual API call
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate processing time
+      // Call Flask backend for face recognition
+      const response = await apiService.markAttendance({ image: imageData });
       
-      // Find a registered user (simulate face recognition)
-      const recognizedUser = findUserByFace();
-      
-      if (!recognizedUser) {
-        setLastResult({ success: false, message: 'No registered users found. Please register first.' });
-        toast({
-          title: "Recognition Failed",
-          description: "No registered users found. Please register a user first.",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      // Add attendance record
-      const attendanceRecord = addAttendanceRecord(recognizedUser);
-      
-      const mockResult: AttendanceResult = {
+      const result: AttendanceResult = {
         success: true,
-        user_name: attendanceRecord.user_name,
-        employee_id: attendanceRecord.employee_id,
-        timestamp: attendanceRecord.timestamp
+        user_name: response.user_name,
+        employee_id: response.employee_id,
+        department: response.department,
+        timestamp: response.timestamp,
+        confidence: response.confidence
       };
       
-      setLastResult(mockResult);
+      setLastResult(result);
       toast({
         title: "Attendance Marked",
-        description: `Welcome ${mockResult.user_name}! Attendance recorded at ${new Date(attendanceRecord.timestamp).toLocaleTimeString()}`
+        description: `Welcome ${response.user_name}! Attendance recorded at ${new Date(response.timestamp).toLocaleTimeString()}`
       });
       
-      // Log the captured data for debugging
-      console.log('Attendance marked:', {
-        ...mockResult,
-        imageSize: imageData.length,
-        timestamp: new Date().toISOString()
-      });
+      // Log the success for debugging
+      console.log('Attendance marked successfully:', response);
       
     } catch (error) {
       console.error('Attendance marking error:', error);
-      setLastResult({ success: false, message: 'Network error occurred' });
+      const errorMessage = error instanceof Error ? error.message : 'Network error occurred';
+      setLastResult({ success: false, message: errorMessage });
+      
       toast({
-        title: "Connection Error",
-        description: "Unable to connect to server. Please try again.",
+        title: "Recognition Failed",
+        description: errorMessage.includes('not recognized') ? 
+          "Face not recognized. Please ensure you are registered." :
+          "Unable to connect to server. Please try again.",
         variant: "destructive"
       });
     } finally {

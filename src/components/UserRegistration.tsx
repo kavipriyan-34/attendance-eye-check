@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { CameraCapture } from './CameraCapture';
 import { useToast } from '@/hooks/use-toast';
 import { UserPlus } from 'lucide-react';
-import { addRegisteredUser, initializeDemoData } from '@/lib/mockDatabase';
+import { apiService } from '@/lib/api';
 
 export const UserRegistration: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -17,11 +17,6 @@ export const UserRegistration: React.FC = () => {
   const [capturedImage, setCapturedImage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    // Initialize demo data when component mounts
-    initializeDemoData();
-  }, []);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -49,15 +44,12 @@ export const UserRegistration: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Store user in mock database
-      // In production, replace this with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-      
-      // Add user to localStorage-based mock database
-      addRegisteredUser({
+      // Register user with Flask backend
+      const response = await apiService.registerUser({
         name: formData.name,
         employee_id: formData.employee_id,
-        department: formData.department || 'Not specified'
+        department: formData.department || 'Not specified',
+        image: capturedImage
       });
       
       toast({
@@ -69,18 +61,14 @@ export const UserRegistration: React.FC = () => {
       setFormData({ name: '', employee_id: '', department: '' });
       setCapturedImage('');
       
-      // Log the captured data for debugging
-      console.log('User registration data:', {
-        ...formData,
-        imageSize: capturedImage.length,
-        timestamp: new Date().toISOString()
-      });
+      // Log the success for debugging
+      console.log('User registration successful:', response);
       
     } catch (error) {
       console.error('Registration error:', error);
       toast({
         title: "Registration Failed",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
+        description: error instanceof Error ? error.message : "Failed to register user",
         variant: "destructive"
       });
     } finally {

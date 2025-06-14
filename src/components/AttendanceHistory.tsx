@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { History, Search, RefreshCw, Calendar, User } from 'lucide-react';
-import { getAttendanceRecords, type AttendanceRecord } from '@/lib/mockDatabase';
+import { History, Search, RefreshCw, Calendar, User, Download } from 'lucide-react';
+import { apiService, type AttendanceRecord } from '@/lib/api';
 
 
 export const AttendanceHistory: React.FC = () => {
@@ -19,16 +19,13 @@ export const AttendanceHistory: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Fetch attendance records from Flask backend
+      const response = await apiService.getAttendanceHistory();
       
-      // Get actual attendance records from localStorage (only real ones)
-      const mockRecords = getAttendanceRecords();
+      setRecords(response.records);
+      setFilteredRecords(response.records);
       
-      setRecords(mockRecords);
-      setFilteredRecords(mockRecords);
-      
-      console.log('Attendance history loaded:', mockRecords);
+      console.log('Attendance history loaded:', response.records);
       
     } catch (error) {
       console.error('Error fetching attendance history:', error);
@@ -40,6 +37,46 @@ export const AttendanceHistory: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDownloadCSV = () => {
+    if (filteredRecords.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No attendance records to download.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Create CSV content
+    const headers = ['Name', 'Employee ID', 'Department', 'Date', 'Time'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredRecords.map(record => [
+        `"${record.user_name}"`,
+        `"${record.employee_id}"`,
+        `"${record.department || 'N/A'}"`,
+        `"${formatDate(record.date)}"`,
+        `"${formatTime(record.timestamp)}"`
+      ].join(','))
+    ].join('\n');
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `attendance-records-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "Download Complete",
+      description: `Downloaded ${filteredRecords.length} attendance records.`
+    });
   };
 
   const handleSearch = (value: string) => {
@@ -109,10 +146,20 @@ export const AttendanceHistory: React.FC = () => {
               />
             </div>
             <Button 
+              onClick={handleDownloadCSV}
+              disabled={isLoading || filteredRecords.length === 0}
+              variant="outline"
+              size="icon"
+              title="Download CSV"
+            >
+              <Download className="w-4 h-4" />
+            </Button>
+            <Button 
               onClick={fetchAttendanceHistory}
               disabled={isLoading}
               variant="outline"
               size="icon"
+              title="Refresh"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>

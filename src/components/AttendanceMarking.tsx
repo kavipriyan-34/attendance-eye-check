@@ -22,32 +22,40 @@ export const AttendanceMarking: React.FC = () => {
     setIsProcessing(true);
     
     try {
-      const response = await fetch('http://localhost:5000/api/mark-attendance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          image: imageData
-        }),
-      });
-
-      const data = await response.json();
+      // Mock face recognition for demo purposes
+      // In production, replace this with actual API call
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate processing time
       
-      if (response.ok && data.success) {
-        setLastResult(data);
-        toast({
-          title: "Attendance Marked",
-          description: `Welcome ${data.user_name}! Attendance recorded at ${new Date(data.timestamp).toLocaleTimeString()}`
-        });
-      } else {
-        setLastResult({ success: false, message: data.error || 'Face not recognized' });
-        toast({
-          title: "Recognition Failed",
-          description: data.error || "Face not recognized. Please try again.",
-          variant: "destructive"
-        });
-      }
+      // Mock successful recognition (you can make this random for demo)
+      const mockUsers = [
+        { user_name: 'John Doe', employee_id: 'EMP001', department: 'Engineering' },
+        { user_name: 'Jane Smith', employee_id: 'EMP002', department: 'Marketing' },
+        { user_name: 'Mike Johnson', employee_id: 'EMP003', department: 'Sales' },
+      ];
+      
+      const randomUser = mockUsers[Math.floor(Math.random() * mockUsers.length)];
+      const timestamp = new Date().toISOString();
+      
+      const mockResult: AttendanceResult = {
+        success: true,
+        user_name: randomUser.user_name,
+        employee_id: randomUser.employee_id,
+        timestamp: timestamp
+      };
+      
+      setLastResult(mockResult);
+      toast({
+        title: "Attendance Marked",
+        description: `Welcome ${mockResult.user_name}! Attendance recorded at ${new Date(timestamp).toLocaleTimeString()} (Demo mode)`
+      });
+      
+      // Log the captured data for debugging
+      console.log('Attendance marked:', {
+        ...mockResult,
+        imageSize: imageData.length,
+        timestamp: new Date().toISOString()
+      });
+      
     } catch (error) {
       console.error('Attendance marking error:', error);
       setLastResult({ success: false, message: 'Network error occurred' });

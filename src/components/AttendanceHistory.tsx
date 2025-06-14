@@ -26,15 +26,50 @@ export const AttendanceHistory: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch('http://localhost:5000/api/attendance-history');
-      const data = await response.json();
+      // Mock attendance data for demo purposes
+      // In production, replace this with actual API call
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
       
-      if (response.ok) {
-        setRecords(data.records || []);
-        setFilteredRecords(data.records || []);
-      } else {
-        throw new Error(data.error || 'Failed to fetch attendance history');
-      }
+      const mockRecords: AttendanceRecord[] = [
+        {
+          id: 1,
+          user_name: 'John Doe',
+          employee_id: 'EMP001',
+          department: 'Engineering',
+          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+          date: new Date().toISOString().split('T')[0]
+        },
+        {
+          id: 2,
+          user_name: 'Jane Smith',
+          employee_id: 'EMP002',
+          department: 'Marketing',
+          timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+          date: new Date().toISOString().split('T')[0]
+        },
+        {
+          id: 3,
+          user_name: 'Mike Johnson',
+          employee_id: 'EMP003',
+          department: 'Sales',
+          timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
+          date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        },
+        {
+          id: 4,
+          user_name: 'Sarah Wilson',
+          employee_id: 'EMP004',
+          department: 'HR',
+          timestamp: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(), // Yesterday
+          date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        }
+      ];
+      
+      setRecords(mockRecords);
+      setFilteredRecords(mockRecords);
+      
+      console.log('Mock attendance history loaded:', mockRecords);
+      
     } catch (error) {
       console.error('Error fetching attendance history:', error);
       toast({

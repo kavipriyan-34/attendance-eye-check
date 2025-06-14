@@ -83,36 +83,56 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       }
       
       console.log('Camera access granted, stream received:', mediaStream);
-      console.log('Stream tracks:', mediaStream.getTracks());
-      console.log('Video tracks:', mediaStream.getVideoTracks());
+      console.log('Stream object type:', typeof mediaStream);
+      console.log('Stream constructor:', mediaStream?.constructor?.name);
       
-      // Check if we have video tracks
-      const videoTracks = mediaStream.getVideoTracks();
-      if (videoTracks.length === 0) {
-        throw new Error('No video tracks available. Camera may be in use by another application.');
+      // More robust track checking
+      let allTracks = [];
+      let videoTracks = [];
+      
+      try {
+        allTracks = mediaStream?.getTracks?.() || [];
+        videoTracks = mediaStream?.getVideoTracks?.() || [];
+        console.log('All tracks count:', allTracks.length);
+        console.log('Video tracks count:', videoTracks.length);
+        console.log('All tracks:', allTracks);
+        console.log('Video tracks:', videoTracks);
+      } catch (trackError) {
+        console.error('Error getting tracks:', trackError);
       }
       
       setDebugInfo('Camera access granted, setting up video...');
       
       if (videoRef.current) {
         console.log('Setting video srcObject...');
-        videoRef.current.srcObject = mediaStream;
-        setStream(mediaStream);
+        console.log('VideoRef current exists:', !!videoRef.current);
         
-        // Set as active immediately since we have a valid stream
-        setIsStreamActive(true);
-        setDebugInfo('Video stream active');
-        console.log('Stream marked as active');
-        
-        // Try to play the video
         try {
-          await videoRef.current.play();
-          console.log('Video playing successfully');
-          setDebugInfo('Camera ready - video playing');
-        } catch (playError) {
-          console.log('Auto-play failed:', playError);
-          setDebugInfo('Stream active - click to play if needed');
+          videoRef.current.srcObject = mediaStream;
+          console.log('Video srcObject set successfully');
+          setStream(mediaStream);
+          
+          // Set as active immediately since we have a stream
+          setIsStreamActive(true);
+          setDebugInfo('Video stream active');
+          console.log('Stream marked as active');
+          
+          // Try to play the video
+          try {
+            await videoRef.current.play();
+            console.log('Video playing successfully');
+            setDebugInfo('Camera ready - video playing');
+          } catch (playError) {
+            console.log('Auto-play failed:', playError);
+            setDebugInfo('Stream active - click to play if needed');
+          }
+        } catch (srcError) {
+          console.error('Error setting srcObject:', srcError);
+          throw new Error('Failed to set video source: ' + srcError.message);
         }
+      } else {
+        console.error('VideoRef.current is null');
+        throw new Error('Video element not available');
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
@@ -227,7 +247,18 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
               autoPlay
               playsInline
               muted
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover cursor-pointer"
+              onClick={async () => {
+                if (videoRef.current) {
+                  try {
+                    await videoRef.current.play();
+                    console.log('Video playing after click');
+                    setDebugInfo('Camera active - video playing');
+                  } catch (err) {
+                    console.error('Error playing video after click:', err);
+                  }
+                }
+              }}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">

@@ -1,9 +1,10 @@
 // Camera utility functions and constraints
 
 export const getCameraConstraints = (): MediaStreamConstraints[] => [
-  { video: { width: 640, height: 480 } },
+  { video: true },
   { video: { facingMode: 'user' } },
-  { video: true }
+  { video: { width: { ideal: 640 }, height: { ideal: 480 } } },
+  { video: { width: 320, height: 240 } }
 ];
 
 export const getCameraWithTimeout = (

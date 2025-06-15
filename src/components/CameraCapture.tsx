@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Camera } from 'lucide-react';
 import { useCameraCapture } from '@/hooks/useCameraCapture';
 import { CameraDisplay } from './CameraDisplay';
@@ -43,9 +44,26 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {debugInfo && (
+        {debugInfo && debugInfo.includes('Error') && (
+          <Alert variant="destructive">
+            <AlertDescription className="space-y-2">
+              <p><strong>Camera Issue:</strong> {debugInfo.replace('Error: ', '')}</p>
+              <div className="text-xs space-y-1">
+                <p><strong>Try these solutions:</strong></p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>Make sure no other apps are using your camera</li>
+                  <li>Check camera permissions in your browser settings</li>
+                  <li>Try refreshing the page</li>
+                  <li>Ensure your camera is properly connected</li>
+                </ul>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {debugInfo && !debugInfo.includes('Error') && (
           <div className="bg-muted p-3 rounded-lg">
-            <p className="text-sm text-muted-foreground">Debug: {debugInfo}</p>
+            <p className="text-sm text-muted-foreground">Status: {debugInfo}</p>
           </div>
         )}
         

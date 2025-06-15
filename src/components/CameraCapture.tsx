@@ -35,25 +35,25 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       console.log('Requesting camera access...');
       setDebugInfo('Requesting camera access...');
       
-      // Try multiple constraint configurations
+      // Try multiple constraint configurations with longer timeouts
       const constraints = [
-        // Try with ideal constraints first
+        // Start with simplest constraint first
+        {
+          video: true
+        },
+        // Try with basic user-facing camera
+        {
+          video: {
+            facingMode: 'user'
+          }
+        },
+        // Try with size constraints
         {
           video: { 
             width: { ideal: 640 },
             height: { ideal: 480 },
             facingMode: 'user'
           }
-        },
-        // Fallback to basic video constraint
-        {
-          video: {
-            facingMode: 'user'
-          }
-        },
-        // Final fallback - any video
-        {
-          video: true
         }
       ];
       

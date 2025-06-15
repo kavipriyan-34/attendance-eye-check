@@ -25,7 +25,6 @@ export const AttendanceMarking: React.FC = () => {
     setIsProcessing(true);
     
     try {
-      // Call Flask backend for face recognition
       const response = await apiService.markAttendance({ image: imageData });
       
       const result: AttendanceResult = {
@@ -43,7 +42,6 @@ export const AttendanceMarking: React.FC = () => {
         description: `Welcome ${response.user_name}! Attendance recorded at ${new Date(response.timestamp).toLocaleTimeString()}`
       });
       
-      // Log the success for debugging
       console.log('Attendance marked successfully:', response);
       
     } catch (error) {

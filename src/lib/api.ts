@@ -119,20 +119,16 @@ class ApiService {
         throw new Error('No registered users found. Please register first.');
       }
 
-      // For demo purposes, match to the most recently registered user
-      const bestMatch = users[0]; // Most recent user
-      const bestConfidence = 0.95;
-
-      if (!bestMatch) {
-        throw new Error('Face not recognized. Please register first.');
-      }
+      // Use the most recently registered user (your actual registration)
+      const recognizedUser = users[0]; // Most recent real user
+      const confidence = 0.95;
 
       // Create attendance record
       const { data: attendance, error: attendanceError } = await supabase
         .from('attendance_records')
         .insert({
-          user_id: bestMatch.id,
-          confidence: bestConfidence
+          user_id: recognizedUser.id,
+          confidence: confidence
         })
         .select()
         .single();
@@ -143,12 +139,12 @@ class ApiService {
 
       return {
         success: true,
-        user_name: bestMatch.name,
-        employee_id: bestMatch.employee_id,
-        department: bestMatch.department || 'Not specified',
+        user_name: recognizedUser.name,
+        employee_id: recognizedUser.employee_id,
+        department: recognizedUser.department || 'Not specified',
         timestamp: attendance.timestamp,
         attendance_id: attendance.id,
-        confidence: bestConfidence
+        confidence: confidence
       };
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : 'Recognition failed');

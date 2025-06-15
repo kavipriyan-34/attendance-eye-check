@@ -1,7 +1,9 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Camera, Users, User } from 'lucide-react';
+import { Camera, Users, User, Trash2 } from 'lucide-react';
+import { apiService } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 interface NavigationProps {
   activeView: 'register' | 'attendance' | 'history';
@@ -9,6 +11,32 @@ interface NavigationProps {
 }
 
 export const Navigation: React.FC<NavigationProps> = ({ activeView, onViewChange }) => {
+  const { toast } = useToast();
+
+  const handleClearData = async () => {
+    try {
+      const result = await apiService.clearAllData();
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "All demo data and records cleared successfully",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to clear data",
+        variant: "destructive",
+      });
+    }
+  };
+
   const navItems = [
     {
       id: 'register' as const,
@@ -31,7 +59,7 @@ export const Navigation: React.FC<NavigationProps> = ({ activeView, onViewChange
   ];
 
   return (
-    <Card className="p-4">
+    <Card className="p-4 space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -54,6 +82,18 @@ export const Navigation: React.FC<NavigationProps> = ({ activeView, onViewChange
             </Button>
           );
         })}
+      </div>
+      
+      {/* Clear Data Button */}
+      <div className="flex justify-center">
+        <Button
+          variant="destructive"
+          onClick={handleClearData}
+          className="flex items-center gap-2"
+        >
+          <Trash2 className="w-4 h-4" />
+          Clear All Demo Data
+        </Button>
       </div>
     </Card>
   );

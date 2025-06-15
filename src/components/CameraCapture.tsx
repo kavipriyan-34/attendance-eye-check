@@ -29,32 +29,26 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     try {
       // Check if getUserMedia is available
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('getUserMedia not supported');
+        throw new Error('Camera not supported by this browser');
       }
       
-      console.log('Requesting camera access...');
       setDebugInfo('Requesting camera access...');
       
-      // Try multiple constraint configurations with longer timeouts
+      // Enhanced camera access with timeout and better error handling
+      const getCameraWithTimeout = (constraints: MediaStreamConstraints, timeout = 10000) => {
+        return Promise.race([
+          navigator.mediaDevices.getUserMedia(constraints),
+          new Promise<never>((_, reject) => 
+            setTimeout(() => reject(new Error('Camera access timeout')), timeout)
+          )
+        ]);
+      };
+
+      // Simplified constraints that work more reliably
       const constraints = [
-        // Start with simplest constraint first
-        {
-          video: true
-        },
-        // Try with basic user-facing camera
-        {
-          video: {
-            facingMode: 'user'
-          }
-        },
-        // Try with size constraints
-        {
-          video: { 
-            width: { ideal: 640 },
-            height: { ideal: 480 },
-            facingMode: 'user'
-          }
-        }
+        { video: { width: 640, height: 480 } },
+        { video: { facingMode: 'user' } },
+        { video: true }
       ];
       
       let mediaStream = null;
@@ -63,12 +57,13 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       for (let i = 0; i < constraints.length; i++) {
         try {
           console.log(`Trying camera constraint ${i + 1}:`, constraints[i]);
-          setDebugInfo(`Trying camera access method ${i + 1}...`);
+          setDebugInfo(`Trying camera method ${i + 1}/3...`);
           
-          mediaStream = await navigator.mediaDevices.getUserMedia(constraints[i]);
+          mediaStream = await getCameraWithTimeout(constraints[i], 8000);
           
-          if (mediaStream && mediaStream.getTracks().length > 0) {
+          if (mediaStream && mediaStream.getVideoTracks().length > 0) {
             console.log('Camera access successful with constraint', i + 1);
+            setDebugInfo('Camera connected successfully!');
             break;
           }
         } catch (error) {
@@ -79,80 +74,54 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       }
       
       if (!mediaStream) {
-        throw lastError || new Error('All camera access methods failed');
+        const errorMsg = lastError instanceof Error ? lastError.message : 'Unknown error';
+        throw new Error(`Camera access failed: ${errorMsg}`);
       }
       
-      console.log('Camera access granted, stream received:', mediaStream);
-      console.log('Stream object type:', typeof mediaStream);
-      console.log('Stream constructor:', mediaStream?.constructor?.name);
-      
-      // More robust track checking
-      let allTracks = [];
-      let videoTracks = [];
-      
-      try {
-        allTracks = mediaStream?.getTracks?.() || [];
-        videoTracks = mediaStream?.getVideoTracks?.() || [];
-        console.log('All tracks count:', allTracks.length);
-        console.log('Video tracks count:', videoTracks.length);
-        console.log('All tracks:', allTracks);
-        console.log('Video tracks:', videoTracks);
-      } catch (trackError) {
-        console.error('Error getting tracks:', trackError);
-      }
-      
-      setDebugInfo('Camera access granted, setting up video...');
-      
-      // Wait a bit to ensure video element is ready
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      // Verify video element is ready
       if (!videoRef.current) {
-        console.error('VideoRef.current is still null after delay');
-        // Try to find the video element by other means
-        const videoElement = document.querySelector('video');
-        if (videoElement) {
-          console.log('Found video element via querySelector');
-          videoRef.current = videoElement as HTMLVideoElement;
-        } else {
-          console.error('No video element found in DOM');
-          throw new Error('Video element not ready. Please try again.');
-        }
+        throw new Error('Video element not ready');
       }
       
-      console.log('Setting video srcObject...');
-      console.log('VideoRef current exists:', !!videoRef.current);
+      // Setup video stream
+      videoRef.current.srcObject = mediaStream;
+      setStream(mediaStream);
+      setIsStreamActive(true);
       
+      // Handle video playback
       try {
-        if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
-          console.log('Video srcObject set successfully');
-          setStream(mediaStream);
-          
-          // Set as active immediately since we have a stream
-          setIsStreamActive(true);
-          setDebugInfo('Video stream active');
-          console.log('Stream marked as active');
-          
-          // Try to play the video
-          try {
-            await videoRef.current.play();
-            console.log('Video playing successfully');
-            setDebugInfo('Camera ready - video playing');
-          } catch (playError) {
-            console.log('Auto-play failed:', playError);
-            setDebugInfo('Stream active - click video if needed');
-          }
-        }
-      } catch (srcError) {
-        console.error('Error setting srcObject:', srcError);
-        throw new Error('Failed to set video source: ' + srcError.message);
+        await videoRef.current.play();
+        setDebugInfo('Camera active and ready');
+        
+        toast({
+          title: "Camera Ready",
+          description: "Camera is now active and ready to capture images."
+        });
+      } catch (playError) {
+        setDebugInfo('Camera ready - click video to start');
       }
+      
     } catch (error) {
-      console.error('Error accessing camera:', error);
-      setDebugInfo('Camera error: ' + (error as Error).message);
+      console.error('Camera error:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown camera error';
+      
+      // Provide user-friendly error messages
+      let userFriendlyMessage = errorMsg;
+      if (errorMsg.includes('timeout')) {
+        userFriendlyMessage = 'Camera took too long to start. Please try again or check if another app is using the camera.';
+      } else if (errorMsg.includes('Permission denied') || errorMsg.includes('NotAllowedError')) {
+        userFriendlyMessage = 'Camera permission denied. Please allow camera access and try again.';
+      } else if (errorMsg.includes('NotFoundError') || errorMsg.includes('DevicesNotFoundError')) {
+        userFriendlyMessage = 'No camera found. Please connect a camera and try again.';
+      } else if (errorMsg.includes('NotReadableError') || errorMsg.includes('TrackStartError')) {
+        userFriendlyMessage = 'Camera is being used by another application. Please close other apps and try again.';
+      }
+      
+      setDebugInfo(`Error: ${userFriendlyMessage}`);
+      
       toast({
         title: "Camera Error",
-        description: `Unable to access camera: ${(error as Error).message}`,
+        description: userFriendlyMessage,
         variant: "destructive"
       });
     }

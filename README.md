@@ -73,4 +73,4 @@ npm run dev
 
 ## Author
 
-**Kavi Priyan**
+**Kavipriyan**

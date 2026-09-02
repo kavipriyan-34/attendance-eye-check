@@ -74,7 +74,3 @@ npm run dev
 ## Author
 
 **Kavi Priyan**
-
-Information Technology Graduate | Java & SQL | Web Development | Building practical software solutions
-
-This project is part of my portfolio and demonstrates my interest in building practical web-based software solutions.

@@ -1,73 +1,80 @@
-# Welcome to your Lovable project
+# Attendance Eye Check
 
-## Project info
+A web-based attendance management application designed to streamline attendance tracking through a modern and user-friendly interface.
 
-**URL**: https://lovable.dev/projects/b988c3e0-eb1f-4f89-bbd5-3c266064fad7
+## Overview
 
-## How can I edit this code?
+Attendance Eye Check is developed to provide an efficient way to manage and monitor attendance records. The project includes a frontend interface, backend functionality, and database integration for handling application data.
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- Attendance tracking and management
+- User-friendly web interface
+- Backend integration
+- Database integration
+- Responsive application design
+- Secure data management
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/b988c3e0-eb1f-4f89-bbd5-3c266064fad7) and start prompting.
+## Technologies Used
 
-Changes made via Lovable will be committed automatically to this repo.
+- TypeScript
+- React
+- JavaScript
+- Python
+- Supabase
+- Tailwind CSS
+- Vite
 
-**Use your preferred IDE**
+## Project Structure
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+```text
+attendance-eye-check/
+├── backend/       # Backend functionality
+├── public/        # Public assets
+├── src/           # Frontend source code
+├── supabase/      # Supabase configuration and database integration
+└── README.md      # Project documentation
+```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Getting Started
 
-Follow these steps:
+### Prerequisites
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Make sure you have the following installed:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- Node.js
+- npm
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Installation
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+Clone the repository:
+
+```bash
+git clone https://github.com/kavipriyan-34/attendance-eye-check.git
+```
+
+Navigate to the project directory:
+
+```bash
+cd attendance-eye-check
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the development server:
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Author
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+**Kavi Priyan**
 
-**Use GitHub Codespaces**
+Information Technology Graduate | Java & SQL | Web Development | Building practical software solutions
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/b988c3e0-eb1f-4f89-bbd5-3c266064fad7) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+This project is part of my portfolio and demonstrates my interest in building practical web-based software solutions.
